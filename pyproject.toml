@@ -95,6 +95,8 @@ pascal = ["tree-sitter-pascal"]
 # avoids breaking the default `uv tool install graphifyy` for everyone (#1104).
 dm = ["tree-sitter-dm"]
 terraform = ["tree-sitter-hcl"]
+yaml = ["tree-sitter-yaml"]
+toml = ["tree-sitter-toml"]
 # tree-sitter-ocaml ships prebuilt abi3 wheels for every platform, so no C
 # toolchain is needed; kept optional because OCaml is a niche corpus language.
 ocaml = ["tree-sitter-ocaml"]
