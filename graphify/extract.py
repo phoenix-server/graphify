@@ -46,6 +46,10 @@ from graphify.extractors.dm import extract_dm, extract_dmf, extract_dmi, extract
 from graphify.extractors.elixir import extract_elixir  # noqa: F401
 from graphify.extractors.fortran import _cpp_preprocess, extract_fortran  # noqa: F401
 from graphify.extractors.go import _GO_PREDECLARED_FUNCS, extract_go  # noqa: F401
+from graphify.extractors.go_sql import extract_go_sql  # noqa: F401
+from graphify.extractors.go_env import extract_go_env  # noqa: F401
+from graphify.extractors.go_nats import extract_go_nats  # noqa: F401
+from graphify.extractors.proto import extract_proto  # noqa: F401
 from graphify.extractors.json_config import extract_json  # noqa: F401
 from graphify.extractors.commonlisp import extract_commonlisp  # noqa: F401
 from graphify.extractors.markdown import extract_markdown, _MD_LINK_INDEX_CACHE  # noqa: F401
@@ -5816,6 +5820,17 @@ def extract_xaml(path: Path) -> dict:
 # block defined in the corpus (count.index, each.key, self.*, path.module, ...).
 
 
+def _extract_go_with_sql(path: Path, go_extractor, sql_extractor, env_extractor, nats_extractor) -> dict:
+    """Run Go extraction then Go-SQL, env-var, and NATS post-processors, merging results."""
+    go_result = go_extractor(path)
+    for post_processor in (sql_extractor, env_extractor, nats_extractor):
+        extra = post_processor(path)
+        if extra.get("nodes"):
+            go_result.setdefault("nodes", []).extend(extra.get("nodes", []))
+            go_result.setdefault("edges", []).extend(extra.get("edges", []))
+    return go_result
+
+
 _DISPATCH: dict[str, Any] = {
     ".py": extract_python,
     ".js": extract_js,
@@ -5826,7 +5841,7 @@ _DISPATCH: dict[str, Any] = {
     ".tsx": extract_js,
     ".mts": extract_js,
     ".cts": extract_js,
-    ".go": extract_go,
+    ".go": lambda p: _extract_go_with_sql(p, extract_go, extract_go_sql, extract_go_env, extract_go_nats),
     ".rs": extract_rust,
     ".java": extract_java,
     ".groovy": extract_groovy,
@@ -5889,6 +5904,7 @@ _DISPATCH: dict[str, Any] = {
     ".skill": extract_markdown,
     ".pas": extract_pascal,
     ".pp": extract_pascal,
+    ".proto": extract_proto,
     ".dpr": extract_pascal,
     ".dpk": extract_pascal,
     ".lpr": extract_pascal,
